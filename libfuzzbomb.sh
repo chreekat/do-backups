@@ -38,6 +38,15 @@ umount_disk () {
     doo dmsetup remove crypt-backup
 }
 
+report_sizes () {
+    before=$1
+    after=$2
+    echo -e "Size before:\t$before"
+    echo -e "Size after:\t$after"
+    echo -en "Increase:\t"
+    echo $((after - before))
+}
+
 main () {
     (
         trap teardown_snapshot EXIT
@@ -45,7 +54,10 @@ main () {
         (
             trap umount_disk EXIT
             mount_disk
+            size_before=$(du -s /mnt/backup/bup|cut -f1)
             make_backup
+            size_after=$(du -s /mnt/backup/bup|cut -f1)
+            report_sizes $size_before $size_after
         )
     )
 }
