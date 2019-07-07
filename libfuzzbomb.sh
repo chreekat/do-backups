@@ -1,5 +1,6 @@
 backupMount=/mnt/backup
 bupDir=$backupMount/bup-2019
+backupDisk=/dev/disk/by-uuid/30f8caae-9266-4f24-b990-0d5390d3accf
 
 doo () {
     sudo $@
@@ -13,7 +14,7 @@ create_snapshot () {
 
 mount_disk () {
     doo cryptsetup luksOpen \
-        /dev/disk/by-uuid/30f8caae-9266-4f24-b990-0d5390d3accf crypt-backup
+        $backupDisk crypt-backup
     doo vgchange -ay
     doo mount /dev/vgbackup/lvbackup $backupMount
 }
@@ -30,13 +31,11 @@ make_backup () {
 }
 
 teardown_snapshot () {
-    set +e
     doo umount /mnt/root-snapshot
     doo lvremove -f ubuntu-vg/lvsnapshot
 }
 
 umount_disk () {
-    set +e
     doo umount $backupMount
     doo lvchange -an vgbackup/lvbackup
     doo dmsetup remove crypt-backup
@@ -56,8 +55,12 @@ main () {
         trap teardown_snapshot EXIT
         create_snapshot
         (
-            trap umount_disk EXIT
-            mount_disk
+            # Don't mount/umount the backup disk if it's already online.
+            if ! findmnt $backupMount > /dev/null
+            then
+                trap umount_disk EXIT
+                mount_disk
+            fi
             size_before=$(du -s $bupDir|cut -f1)
             make_backup
             size_after=$(du -s $bupDir|cut -f1)
