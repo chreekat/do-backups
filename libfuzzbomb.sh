@@ -25,7 +25,7 @@ make_backup () {
         --no-check-device \
         --exclude=/mnt/root-snapshot/nix \
         --exclude=/mnt/root-snapshot/home/b/Annex \
-        --exclude=/mnt/root-snapshot/home/b/Torrents \
+        --exclude=/var/lib/transmission/Downloads \
         /mnt/root-snapshot
     doo bup -d $bupDir save -n fuzzbomb --strip /mnt/root-snapshot
 }
