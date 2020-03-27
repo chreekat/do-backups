@@ -1,8 +1,8 @@
 # TODO: Subvolume for /home/b
 
-device_id=bryan-laptop
+set -Eeuo pipefail
 
-backup_mount=/home/b/GoogleDrive/RELEX/backups
+device_id=bryan-laptop
 
 snapshot_dir=/mnt/snapshot/root
 bup_target=$snapshot_dir/home/b
@@ -36,6 +36,8 @@ make_backup () {
 }
 
 report_sizes () {
+    local before
+    local after
     before=$1
     after=$2
     echo -e "Size before:\t$before"
@@ -55,8 +57,10 @@ main () {
         trap teardown_snapshot EXIT
         create_snapshot
         sudo -u $SUDO_USER bup init
+        local size_before
         size_before=$(du -s $home/.bup | cut -f1)
         make_backup
+        local size_after
         size_after=$(du -s $home/.bup | cut -f1)
         report_sizes $size_before $size_after
     )
