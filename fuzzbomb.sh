@@ -50,6 +50,21 @@ report_sizes () {
     echo $((after - before))
 }
 
+unsafe_destroy_bup_dir () {
+    doo rm -r $bup_dir
+}
+
+initialize_bup_dir () {
+    set -ex
+    if [[ ! -d $bup_dir ]]; then
+        (
+            trap "unsafe_destroy_bup_dir" ERR
+            doo mkdir $bup_dir
+            doo env BUP_DIR=$bup_dir bup init
+        )
+    fi
+}
+
 main () {
     (
         trap teardown_snapshot EXIT
@@ -61,6 +76,7 @@ main () {
                 trap umount_disk EXIT
                 mount_disk
             fi
+            initialize_bup_dir
             size_before=$(du -s $bup_dir|cut -f1)
             make_backup
             size_after=$(du -s $bup_dir|cut -f1)
