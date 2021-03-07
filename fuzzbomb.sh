@@ -1,6 +1,6 @@
-backupMount=/mnt/backup
-bupDir=$backupMount/bup-2019
-backupDisk=/dev/disk/by-uuid/30f8caae-9266-4f24-b990-0d5390d3accf
+backup_mount=/mnt/backup
+bup_dir=$backup_mount/bup-2019
+backup_disk=/dev/disk/by-uuid/30f8caae-9266-4f24-b990-0d5390d3accf
 
 doo () {
     sudo $@
@@ -14,20 +14,20 @@ create_snapshot () {
 
 mount_disk () {
     doo cryptsetup luksOpen \
-        $backupDisk crypt-backup
+        $backup_disk crypt-backup
     doo vgchange -ay
-    doo mount /dev/vgbackup/lvbackup $backupMount
+    doo mount /dev/vgbackup/lvbackup $backup_mount
 }
 
 make_backup () {
     # ignore that snapshot volumes change names
-    doo bup -d $bupDir index \
+    doo bup -d $bup_dir index \
         --no-check-device \
         --exclude=/mnt/root-snapshot/nix \
         --exclude=/mnt/root-snapshot/home/b/Annex \
         --exclude=/var/lib/transmission/Downloads \
         /mnt/root-snapshot
-    doo bup -d $bupDir save -n fuzzbomb --strip /mnt/root-snapshot
+    doo bup -d $bup_dir save -n fuzzbomb --strip /mnt/root-snapshot
 }
 
 teardown_snapshot () {
@@ -36,7 +36,7 @@ teardown_snapshot () {
 }
 
 umount_disk () {
-    doo umount $backupMount
+    doo umount $backup_mount
     doo lvchange -an vgbackup/lvbackup
     doo dmsetup remove crypt-backup
 }
@@ -56,14 +56,14 @@ main () {
         create_snapshot
         (
             # Don't mount/umount the backup disk if it's already online.
-            if ! findmnt $backupMount > /dev/null
+            if ! findmnt $backup_mount > /dev/null
             then
                 trap umount_disk EXIT
                 mount_disk
             fi
-            size_before=$(du -s $bupDir|cut -f1)
+            size_before=$(du -s $bup_dir|cut -f1)
             make_backup
-            size_after=$(du -s $bupDir|cut -f1)
+            size_after=$(du -s $bup_dir|cut -f1)
             report_sizes $size_before $size_after
         )
     )
