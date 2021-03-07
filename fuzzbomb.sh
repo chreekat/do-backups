@@ -1,5 +1,5 @@
 backup_mount=/mnt/backup
-bup_dir=$backup_mount/bup-2019
+bup_dir=$backup_mount/bup-$(date +%Y)
 backup_disk=/dev/disk/by-uuid/30f8caae-9266-4f24-b990-0d5390d3accf
 
 doo () {
